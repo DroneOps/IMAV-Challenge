@@ -2,7 +2,7 @@ import cv2
 import cv2.aruco as aruco
 
 
-aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_6X6_50)
+aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
 parameters = aruco.DetectorParameters()
 cap = cv2.VideoCapture(0)
 
@@ -39,6 +39,21 @@ while True:
             cv2.circle(frame, center_point, 5, (0, 0, 255), -1)
             cv2.putText(frame, f'Center: {center_point}', (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
+
+    'if at least 2 markers are detected, we can assume that they form a line and we can draw it on the frame'
+    if ids is not None and ids.size == 2:
+        c1 = (corners[0][0], ids[0][0]) #get the corners of the first aruco marker
+        c2 = (corners[1][0], ids[1][0]) #get the corners of the second aruco marker
+
+        center1 = (int(c1[0][:, 0].mean()), int(c1[0][:, 1].mean())) #get the center point of the first aruco marker
+        center2 = (int(c2[0][:, 0].mean()), int(c2[0][:, 1].mean())) #get the center point of the second aruco marker
+
+        center_point = ((center1[0] + center2[0]) // 2, (center1[1] + center2[1]) // 2) #calculate the center point of the line formed by the two markers
+        cv2.circle(frame, center_point, 5, (0, 255, 255), -1) #draw a circle at the center point of the line
+
+
+        cv2.line(frame, center1, center2, (255, 255, 0), 2) #draw a line between the two markers
+        cv2.putText(frame, f'Line Detected!', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2) #if the line is detected, write "Line Detected!" on the frame
                 
 
     cv2.imshow('Frame', frame)
