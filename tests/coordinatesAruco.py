@@ -18,7 +18,7 @@ while True:
             cv2.putText(frame, f'ID: {ids[i][0]}', (int(c[0][0]), int(c[0][1]) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             cv2.polylines(frame, [corners[i].astype(int)], True, (0, 255, 0), 2)
 
-    #calculate the distance between arucos 
+    'if at least 4 markers are detected, we can assume that they form a rectangle and we can draw it on the frame'
     if ids is not None and len(ids) >= 4:
         c1 = (corners[0][0], ids[0][0]) #get the corners of the first aruco marker
         c2 = (corners[1][0], ids[1][0]) #get the corners of the second aruco marker
@@ -30,12 +30,11 @@ while True:
         center3 = (int(c3[0][:, 0].mean()), int(c3[0][:, 1].mean())) #get the center point of the third aruco marker
         center4 = (int(c4[0][:, 0].mean()), int(c4[0][:, 1].mean())) #get the center point of the fourth aruco marker
 
-        #draw a square between the four aruco markers from ID 16 to ID 11 to ID 17 to ID 4
-        
+        #draw a rectangle around the four aruco markers
         rec = cv2.rectangle(frame, center1, center4, (255, 0, 0), 2)
         if rec is not None:
-            cv2.putText(frame, f'Frame Detected!', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
-            # calculate the centert point of the rectangle
+            cv2.putText(frame, f'Frame Detected!', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2) #if the rectangle is detected, write "Frame Detected!" on the frame
+            # calculate the centert point of the rectangle for a potential drone control point
             center_point = ((center1[0] + center4[0]) // 2, (center1[1] + center4[1]) // 2)
             cv2.circle(frame, center_point, 5, (0, 0, 255), -1)
             cv2.putText(frame, f'Center: {center_point}', (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
