@@ -1,16 +1,28 @@
 import coordinatesAruco 
 import cv2
 
-aruco = coordinatesAruco.ArucoDetector(coordinatesAruco.aruco.DICT_6X6_50) #initialize the ArucoDetector with the specified dictionary
+# Inicializar detector
+aruco = coordinatesAruco.ArucoDetector(cv2.aruco.DICT_6X6_50)
 
-cap = cv2.VideoCapture(0) #initialize the video capture object to read from the default camera
+cap = cv2.VideoCapture(0)
 
 while True:
-    aruco.detect_markers(cap) #call the detect_markers method to detect the markers and display
-    print(aruco.get_error())
-    ret, frame = cap.read() #read a frame from the video capture object
-    cv2.imshow('Frame', frame) #display the frame with the detected markers and the error
-    if cv2.waitKey(1) & 0xFF == ord('q'): #if the 'q' key is pressed, break the loop and exit
+    ret, frame = cap.read()
+    if not ret:
         break
-cap.release() #release the video capture object
-cv2.destroyAllWindows() #close all OpenCV windows
+
+    # Pasamos el frame a la clase para que detecte y DIBUJE sobre Ã©l
+    aruco.detect_markers(frame) 
+    
+    # Obtenemos el error calculado
+    error = aruco.get_error()
+    print(f"Error actual: {error}")
+
+    # Mostramos el frame que ya tiene los dibujos de la clase
+    cv2.imshow('Deteccion Aruco', frame) 
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()

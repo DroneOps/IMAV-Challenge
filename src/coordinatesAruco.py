@@ -13,8 +13,7 @@ class ArucoDetector:
         self.y = 480 #assuming the height of the frame is 480 pixels
 
        
-    def detect_markers(self, cap):
-        ret, frame = cap.read()
+    def detect_markers(self, frame):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) #convert the frame to grayscale for better detection
         corners, ids, rejectedImgPoints = cv2.aruco.ArucoDetector(self.aruco_dict, self.parameters).detectMarkers(gray) #detect the aruco markers in the frame
         'draw the axis of the camera'
@@ -85,7 +84,8 @@ class ArucoDetector:
             self.error = center_frame[0] - center_point[0], center_frame[1] - center_point[1] #calculate the error between the center of the frame and the center point of the detected line or rectangle
             cv2.putText(frame, f'Error: {self.error}', (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2) #write the error on the frame
             cv2.line(frame, center_frame, center_point, (0, 0, 0), 2) #draw a line between the center of the frame and the center point of the detected line or rectangle
-
+        
+        return frame #return the frame with the detected markers, the center point of the detected line or rectangle, and the error between the center of the frame and the center point of the detected line or rectangle
     'return the error between the center of the frame and the center point of the detected line or rectangle'   
     def get_error(self):
         return self.error 
