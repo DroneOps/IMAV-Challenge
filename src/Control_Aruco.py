@@ -1,14 +1,13 @@
 import coordinatesAruco 
 import cv2
-
-import djitellopy as tello
-
+import MissionControl as MC
 
 class ArucoController:
+
     def __init__(self):
         # Initialize the ArucoDetector with the desired dictionary type (e.g., DICT_6X6_50)
         self.aruco = coordinatesAruco.ArucoDetector(cv2.aruco.DICT_6X6_50)
-        self.cap = cv2.VideoCapture(0)
+        self.cap = None
 
         self.Kp = 0.1 # Proportional gain
         self.Ki = 0.00 # Integral gain
@@ -16,33 +15,39 @@ class ArucoController:
 
         self.dt = 0.1 # Time step (in seconds)
 
-    def PID_control(self, error, vel_x, vel_y):
+        self.mission_control = MC.MissionControl() # Create an instance of the MissionControl class to access its methods and attributes
+
+
+
+    def PID_control(self, error, vel_y, vel_z):
         # Calculate the control signal using the PID formula
-        self.proportional_x = round(self.Kp * error[0], 3) # Proportional term for x-axis
-        self.proportional_y = round(self.Kp * error[1], 3) # Proportional term for y-axis
+        self.proportional_y = round(self.Kp * error[0], 3) # Proportional term for x-axis
+        self.proportional_z = round(self.Kp * error[1], 3) # Proportional term for z-axis
 
-        self.integral_x = round(self.Ki * error[0] * self.dt, 3) # Integral term for x-axis
-        self.integral_y = round(self.Ki * error[1] * self.dt, 3) # Integral term for y-axis
+        self.integral_y += round(self.Ki * error[0] * self.dt, 3) # Integral term for x-axis
+        self.integral_z += round(self.Ki * error[1] * self.dt, 3) # Integral term for z-axis
 
-        self.derivative_x = round(self.Kd * vel_x, 3) # Derivative term for x-axis
-        self.derivative_y = round(self.Kd * vel_y, 3) # Derivative term for y-axis
+        self.derivative_y = round(self.Kd * vel_y, 3) # Derivative term for x-axis
+        self.derivative_z = round(self.Kd * vel_z, 3) # Derivative term for z-axis
 
-        control_signal_x = self.proportional_x + self.integral_x + self.derivative_x
         control_signal_y = self.proportional_y + self.integral_y + self.derivative_y
+        control_signal_z = self.proportional_z + self.integral_z + self.derivative_z
 
         # For demonstration, we will just print the control signals
-        print(f"[INFO] Control Signal X: {control_signal_x}, Control Signal Y: {control_signal_y}")
+        print(f"[INFO] Control Signal Y: {control_signal_y}, Control Signal Z: {control_signal_z}")
+
+        return control_signal_y, control_signal_z
 
 
-    def run(self):
+    def run(self, cap  = None):
+        self.cap = cap
         while True:
             ret, frame = self.cap.read()
             if not ret:
                 break
 
             # Obtain velocity readings from the drone (for the derivative term in PID control)
-            vel_x = tello.get_speed_x()
-            vel_y = tello.get_speed_y()
+            vel_y, vel_z = self.mission_control.get_velocities()
 
             # Detect markers and draw the results on the frame
             self.aruco.detect_markers(frame) 
@@ -51,12 +56,16 @@ class ArucoController:
             error = self.aruco.get_error()
             #print(f"Error actual: {error}")
             if error != (0, 0) and error != errorPrev: #if there is an error, we can use the PID control to calculate the control signal to move the drone towards the center of the detected line or rectangle
-                self.PID_control(error, vel_x, vel_y)
-            
+                control_signal_y, control_signal_z = self.PID_control(error, vel_y, vel_z)
+                self.mission_control.send_control_signals(control_signal_y, control_signal_z)
+
             errorPrev = error # update the previous error with the current error for the next iteration
 
             # Show the frame that already has the drawings of the class
             cv2.imshow('Deteccion Aruco', frame) 
+
+             # Send the control signals to the drone
+
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break

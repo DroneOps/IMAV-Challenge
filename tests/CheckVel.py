@@ -1,6 +1,7 @@
 
 from djitellopy import Tello
 import time
+import cv2
 
 tello = Tello()
 
@@ -9,9 +10,10 @@ try:
     print(f"Batería: {tello.get_battery()}%")
     tello.takeoff()
     time.sleep(2)
+    tello.streamon()
 
     # --- CONFIGURACIÓN DEL VUELO ---
-    tiempo_de_avance = 4 # <--- CAMBIA ESTE VALOR (en segundos)
+    tiempo_de_avance = 2 # <--- CAMBIA ESTE VALOR (en segundos)
     velocidad = 7          # Velocidad recomendada para lecturas estables (0 a 100)
     # -------------------------------
 
@@ -31,6 +33,15 @@ try:
         ay = tello.get_acceleration_y() 
         az = tello.get_acceleration_z()
 
+        tello.get_frame_read()
+
+        cv2.imshow("Tello Stream", tello.get_frame_read().frame)
+        
+        # Procesar eventos de la ventana de video y chequear si se presiona 'q'
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'):
+            print("\n--- TECLA Q DETECTADA. ABORTANDO ---")
+            break
 
         print(f"EJECUTANDO -> VX: {vx} | VY: {vy} | VZ: {vz} | Ax: {ax} | Ay: {ay} | Az: {az}" )
 
@@ -42,10 +53,24 @@ try:
     print("\n--- TIEMPO CUMPLIDO. FRENANDO ---")
     tello.send_rc_control(0, 0, 0, 0)
     time.sleep(2) # Esperar a que se detenga por completo antes de aterrizar
-
+    
+    # Cerrar si se presiona la tecla 'q'
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        print("\n--- TECLA Q DETECTADA. ATERRIZANDO ---")
+        tello.land()
+        
     tello.land()
 
+except KeyboardInterrupt:
+    print("\n--- [ALERTA] CONTROL+C DETECTADO. ATERRIZANDO DE EMERGENCIA ---")
+    try:
+        tello.send_rc_control(0, 0, 0, 0) # Frena todos los motores
+        tello.land()
+        tello.streamoff()
+    except:
+        pass
 except Exception as e:
     print(f"Error: {e}")
 finally:
     tello.end()
+    cv2.destroyAllWindows()
