@@ -13,9 +13,9 @@ class ArucoController:
         self.integral_y = 0
         self.integral_z = 0
         self.errorPrev = (0, 0) # Para evitar el error de "variable no definida"
-        self.Kp = 0.1 # Proportional gain
-        self.Ki = 0.00 # Integral gain
-        self.Kd = 0.00 # Derivative gain
+        self.Kp = 0.20 # Proportional gain
+        self.Ki = 0.10 # Integral gain
+        self.Kd = 0.10 # Derivative gain
 
         self.dt = 0.1 # Time step (in seconds)
 
