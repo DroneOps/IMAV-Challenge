@@ -13,9 +13,9 @@ class ArucoController:
         self.integral_y = 0
         self.integral_z = 0
         self.errorPrev = (0, 0) # Para evitar el error de "variable no definida"
-        self.Kp = 0.20 # Proportional gain
-        self.Ki = 0.10 # Integral gain
-        self.Kd = 0.10 # Derivative gain
+        self.Kp = 0.15 # Proportional gain
+        self.Ki = 0.02 # Integral gain
+        self.Kd = 0.03 # Derivative gain
 
         self.dt = 0.1 # Time step (in seconds)
 
@@ -57,13 +57,13 @@ class ArucoController:
             self.aruco.detect_markers(frame) 
             
             # Get the error between the center of the frame and the center point of the detected line or rectangle
-            error = self.aruco.get_error()
+            self.error = self.aruco.get_error()
             #print(f"Error actual: {error}")
-            if error != (0, 0) and error != errorPrev: #if there is an error, we can use the PID control to calculate the control signal to move the drone towards the center of the detected line or rectangle
-                control_signal_y, control_signal_z = self.PID_control(error, vel_y, vel_z)
+            if self.error != (0, 0) and self.error != self.errorPrev: #if there is an error, we can use the PID control to calculate the control signal to move the drone towards the center of the detected line or rectangle
+                control_signal_y, control_signal_z = self.PID_control(self.error, vel_y, vel_z)
                 self.mission_control.send_control_signals(control_signal_y, control_signal_z)
 
-            errorPrev = error # update the previous error with the current error for the next iteration
+            self.errorPrev = self.error # update the previous error with the current error for the next iteration
 
             # Show the frame that already has the drawings of the class
             cv2.imshow('Deteccion Aruco', frame) 
