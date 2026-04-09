@@ -10,7 +10,7 @@ class ArucoDetector:
         self.parameters = aruco.DetectorParameters()
         self.error = (0, 0) # initialize the error variable to store the error between the center of the frame and the center point of the detected line or rectangle
 
-        self.x = 1280 # assuming the width of the frame is 640 pixels
+        self.x = 1000 # assuming the width of the frame is 640 pixels
         self.y = 720 # assuming the height of the frame is 480 pixels
 
 
