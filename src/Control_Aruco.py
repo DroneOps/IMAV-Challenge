@@ -4,18 +4,22 @@ import MissionControl as MC
 
 class ArucoController:
 
-    def __init__(self):
+    def __init__(self,mission_control = None):
         # Initialize the ArucoDetector with the desired dictionary type (e.g., DICT_6X6_50)
         self.aruco = coordinatesAruco.ArucoDetector(cv2.aruco.DICT_6X6_50)
         self.cap = None
-
+        # PID control parameters
+        # IMPORTANTE: Debes inicializar estas variables para que el PID no falle
+        self.integral_y = 0
+        self.integral_z = 0
+        self.errorPrev = (0, 0) # Para evitar el error de "variable no definida"
         self.Kp = 0.1 # Proportional gain
         self.Ki = 0.00 # Integral gain
         self.Kd = 0.00 # Derivative gain
 
         self.dt = 0.1 # Time step (in seconds)
 
-        self.mission_control = MC.MissionControl() # Create an instance of the MissionControl class to access its methods and attributes
+        self.mission_control = mission_control # Create an instance of the MissionControl class to access its methods and attributes
 
 
 
@@ -42,9 +46,9 @@ class ArucoController:
     def run(self, cap  = None):
         self.cap = cap
         while True:
-            ret, frame = self.cap.read()
-            if not ret:
-                break
+            frame = self.cap.frame
+            if frame is None:
+                continue
 
             # Obtain velocity readings from the drone (for the derivative term in PID control)
             vel_y, vel_z = self.mission_control.get_velocities()
