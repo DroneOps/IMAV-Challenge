@@ -1,9 +1,7 @@
 import cv2
 import cv2.aruco as aruco
 
-
 class ArucoDetector:
-
     # Initialize the ArucoDetector class with the specified dictionary and parameters
     def __init__(self, aruco_type):
         self.aruco_dict = aruco.getPredefinedDictionary(aruco_type)
@@ -12,7 +10,6 @@ class ArucoDetector:
 
         self.x = 960  # assuming the width of the frame is 960 pixels
         self.y = 720 # assuming the height of the frame is 720 pixels
-
 
     # Detect the markers in the frame and draw the detected markers, the center point of the detected line or rectangle, 
     # and the error between the center of the frame and the center point of the detected line or rectangle on the frame  
@@ -99,6 +96,5 @@ def main():
     detector = ArucoDetector(aruco.DICT_6X6_50) #initialize the ArucoDetector with the specified dictionary
     detector.detect_markers() #call the detect_markers method to detect the markers and display the frame
         
-
 if __name__ == "__main__":
     main()

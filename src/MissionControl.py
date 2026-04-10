@@ -2,7 +2,6 @@ import Control_Aruco
 from djitellopy import Tello
 import cv2 
 
-
 class MissionControl:
     def __init__(self):
         self.tello = Tello() # Create an instance of the Tello class to control the drone
@@ -41,11 +40,6 @@ class MissionControl:
         # Here you would send the control signals to the drone using the appropriate methods from the Tello class
         # For example:
         self.tello.send_rc_control(int(control_signal_y), 0, int(control_signal_z), 0)
-
-
-    
-
-
 
 if __name__ == "__main__":
     mission_control = MissionControl()

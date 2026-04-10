@@ -3,7 +3,6 @@ import cv2
 import MissionControl as MC
 
 class ArucoController:
-
     def __init__(self,mission_control = None):
         # Initialize the ArucoDetector with the desired dictionary type (e.g., DICT_6X6_50)
         self.aruco = coordinatesAruco.ArucoDetector(cv2.aruco.DICT_6X6_50)
@@ -20,8 +19,6 @@ class ArucoController:
         self.dt = 0.1 # Time step (in seconds)
 
         self.mission_control = mission_control # Create an instance of the MissionControl class to access its methods and attributes
-
-
 
     def PID_control(self, error, vel_y, vel_z):
         # Calculate the control signal using the PID formula
@@ -42,8 +39,7 @@ class ArucoController:
 
         return control_signal_y, control_signal_z
 
-
-    def run(self, cap  = None):
+    def run(self, cap=None):
         self.cap = cap
         while True:
             frame = self.cap.frame
@@ -76,8 +72,6 @@ class ArucoController:
 
         self.cap.release()
         cv2.destroyAllWindows()
-
-
 
 def main():
     controller = ArucoController()
