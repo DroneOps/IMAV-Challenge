@@ -28,9 +28,9 @@ class MissionControl:
             print("[INFO] Mission interrupted by user.")
         finally:
             print("[INFO] Cleaning up and shutting down...")
-            # --- SEGURIDAD EXTRA ---
+            # --- Extra Safety ---
             try:
-                self.tello.land() # Asegúrate de que aterrice
+                self.tello.land() # Land the drone safely in case of an interruption
             except:
                 pass
             # -----------------------
