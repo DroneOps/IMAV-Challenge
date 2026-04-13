@@ -2,11 +2,14 @@ import coordinatesAruco
 import cv2
 import MissionControl as MC
 
+import pandas as pd # Data manipulation and analysis library
+
 class ArucoController:
     def __init__(self,mission_control = None):
         # Initialize the ArucoDetector with the desired dictionary type (e.g., DICT_6X6_50)
         self.aruco = coordinatesAruco.ArucoDetector(cv2.aruco.DICT_6X6_50)
         self.cap = None
+        
         # PID control parameters
         # IMPORTANTE: Debes inicializar estas variables para que el PID no falle
         self.integral_y = 0
@@ -15,10 +18,27 @@ class ArucoController:
         self.Kp = 0.10 # Proportional gain
         self.Ki = 0.04  # Integral gain
         self.Kd = 0.04 # Derivative gain
-
         self.dt = 0.1 # Time step (in seconds)
 
-        self.mission_control = mission_control # Create an instance of the MissionControl class to access its methods and attributes
+        # Initialize lists to store error values
+        self.Time = []
+        self.Y_Error = []
+        self.Z_Error = []
+
+        # Create an instance of the MissionControl class to access its methods and attributes
+        self.mission_control = mission_control
+
+    def update_error_data(self, time_step, y_error, z_error):
+        self.Time.append(time_step)
+        self.Y_Error.append(y_error)
+        self.Z_Error.append(z_error)
+
+    def save_error_data(self, time_step, y_error, z_error):
+        # Append the new error data to the DataFrame
+        error_data = pd.DataFrame({'Time': [time_step], 'Y_Error': [y_error], 'Z_Error': [z_error]})
+
+        # Save the DataFrame to a CSV file
+        error_data.to_csv('error_data.csv', mode='a', header=False, index=False)
 
     def PID_control(self, error, vel_y, vel_z):
         # Calculate the control signal using the PID formula
@@ -64,9 +84,11 @@ class ArucoController:
             # Show the frame that already has the drawings of the class
             cv2.imshow('Deteccion Aruco', frame) 
 
-             # Send the control signals to the drone
+            # Save the error data to the DataFrame and then to a CSV file
+            self.update_error_data(len(self.Time) * self.dt, self.error[0], self.error[1])
+            self.save_error_data(len(self.Time) * self.dt, self.error[0], self.error[1])
 
-
+            # Exit the loop if 'q' is pressed
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 

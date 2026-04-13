@@ -1,21 +1,33 @@
 import cv2
 import cv2.aruco as aruco
+import numpy as np
 
 class ArucoDetector:
+
     # Initialize the ArucoDetector class with the specified dictionary and parameters
     def __init__(self, aruco_type):
         self.aruco_dict = aruco.getPredefinedDictionary(aruco_type)
         self.parameters = aruco.DetectorParameters()
         self.error = (0, 0) # initialize the error variable to store the error between the center of the frame and the center point of the detected line or rectangle
 
-        self.x = 960  # assuming the width of the frame is 960 pixels
-        self.y = 720 # assuming the height of the frame is 720 pixels
+        self.x = 2592  # assuming the width of the frame is 640 pixels
+        self.y = 1936 # assuming the height of the frame is 480 pixels
+
+        # --- NUEVAS VARIABLES PARA CÁLCULO DE DISTANCIA ---
+        # Distancia focal estimada para resolución 2592px (Aprox 1800-2000)
+        self.focal_length = 1800 
+        # Ancho real del marco físico en centímetros (Ajusta este valor)
+        self.real_width_cm = 50.0 
+
 
     # Detect the markers in the frame and draw the detected markers, the center point of the detected line or rectangle, 
     # and the error between the center of the frame and the center point of the detected line or rectangle on the frame  
     def detect_markers(self, frame):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) # convert the frame to grayscale for better detection
-        corners, ids, rejectedImgPoints = cv2.aruco.ArucoDetector(self.aruco_dict, self.parameters).detectMarkers(gray) #detect the aruco markers in the frame
+        
+        # Actualización para versiones recientes de OpenCV:
+        detector = cv2.aruco.ArucoDetector(self.aruco_dict, self.parameters)
+        corners, ids, rejectedImgPoints = detector.detectMarkers(gray)
 
         # Draw the center lines of the frame
         cv2.line(frame, (self.x//2, 0), (self.x//2, self.y), (255, 0, 255), 1) # draw a vertical line in the center of the frame color blue
@@ -55,6 +67,14 @@ class ArucoDetector:
             min_y = min(c[1] for c in centers)
             max_y = max(c[1] for c in centers)
 
+            # --- LÓGICA DE DISTANCIA AÑADIDA ---
+            pixel_width = max_x - min_x
+            if pixel_width > 0:
+                # Aplicamos d = (F * W) / w
+                distancia = (self.focal_length * self.real_width_cm) / pixel_width
+                cv2.putText(frame, f'Distancia: {distancia:.2f} cm', (min_x, max_y + 30), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
+
             # Draw the bounding rectangle
             cv2.rectangle(frame, (min_x, min_y), (max_x, max_y), (255, 0, 0), 2)
             cv2.putText(frame, f'Frame Detected!', (250, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
@@ -88,13 +108,35 @@ class ArucoDetector:
             cv2.line(frame, center_frame, center_point, (0, 0, 0), 2) #draw a line between the center of the frame and the center point of the detected line or rectangle
         
         return frame #return the frame with the detected markers, the center point of the detected line or rectangle, and the error between the center of the frame and the center point of the detected line or rectangle
+
     'return the error between the center of the frame and the center point of the detected line or rectangle'   
     def get_error(self):
         return self.error 
     
 def main():
-    detector = ArucoDetector(aruco.DICT_6X6_50) #initialize the ArucoDetector with the specified dictionary
-    detector.detect_markers() #call the detect_markers method to detect the markers and display the frame
+    # Inicialización del detector y la captura de video
+    detector = ArucoDetector(aruco.DICT_6X6_50) 
+    cap = cv2.VideoCapture(0)
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            break
         
+        # Ajustar frame a la resolución definida en la clase para que las líneas coincidan
+        frame = cv2.resize(frame, (detector.x, detector.y))
+        
+        processed_frame = detector.detect_markers(frame)
+        
+        # Redimensionar para visualización cómoda en pantalla
+        display_frame = cv2.resize(processed_frame, (800, 600))
+        cv2.imshow("Aruco Distance & Error", display_frame)
+
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+    cap.release()
+    cv2.destroyAllWindows()
+
 if __name__ == "__main__":
     main()
