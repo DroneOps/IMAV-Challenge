@@ -44,4 +44,3 @@ class MissionControl:
 if __name__ == "__main__":
     mission_control = MissionControl()
     mission_control.start_mission()
-

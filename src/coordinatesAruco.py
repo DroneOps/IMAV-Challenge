@@ -10,14 +10,14 @@ class ArucoDetector:
         self.parameters = aruco.DetectorParameters()
         self.error = (0, 0) # initialize the error variable to store the error between the center of the frame and the center point of the detected line or rectangle
 
-        self.x = 2592  # assuming the width of the frame is 640 pixels
-        self.y = 1936 # assuming the height of the frame is 480 pixels
+        self.x = 960  # assuming the width of the frame is 640 pixels
+        self.y = 720 # assuming the height of the frame is 480 pixels
 
         # --- NUEVAS VARIABLES PARA CÁLCULO DE DISTANCIA ---
         # Distancia focal estimada para resolución 2592px (Aprox 1800-2000)
         self.focal_length = 1800 
         # Ancho real del marco físico en centímetros (Ajusta este valor)
-        self.real_width_cm = 50.0 
+        self.real_width_cm = 38.0 
 
 
     # Detect the markers in the frame and draw the detected markers, the center point of the detected line or rectangle, 
