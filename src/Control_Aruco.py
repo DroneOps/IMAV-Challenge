@@ -74,6 +74,7 @@ class ArucoController:
             
             # Get the error between the center of the frame and the center point of the detected line or rectangle
             self.error = self.aruco.get_error()
+            self.aruco.ge
             #print(f"Error actual: {error}")
             if self.error != (0, 0) and self.error != self.errorPrev: #if there is an error, we can use the PID control to calculate the control signal to move the drone towards the center of the detected line or rectangle
                 control_signal_y, control_signal_z = self.PID_control(self.error, vel_y, vel_z)

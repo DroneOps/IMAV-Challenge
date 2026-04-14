@@ -11,7 +11,7 @@ class MissionControl:
         self.tello.streamon() # Start the video stream from the drone's camera
         self.cap = self.tello.get_frame_read() # Get the video stream from the drone's camera
         
-        self.aruco_controller = Control_Aruco.ArucoController(self)
+        self.aruco_controller = Control_Aruco.ArucoController(self, self.cap )
 
     def get_velocities(self):
         vel_y = self.tello.get_speed_y() # Get the velocity of the drone in the x-axis
@@ -22,7 +22,7 @@ class MissionControl:
         print("[INFO] Starting the mission...")
         try:
             self.tello.takeoff() # Take off the drone   
-            self.aruco_controller.run(self.cap)
+            self.aruco_controller.run()
         except KeyboardInterrupt:
             print("[INFO] Mission interrupted by user.")
         finally:
