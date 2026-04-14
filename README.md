@@ -1,11 +1,3 @@
-<<<<<<< HEAD
-# IMAV Challenge - Drone Vision System
-
-This repository contains the software and vision systems developed for the IMAV Configuration Challenge. The project focuses on creating a comprehensive vision system for autonomous drones, utilizing state-of-the-art computer vision techniques and machine learning algorithms.
-
-### Authors
-Drone Ops Team
-=======
 # IMAV Challenge - Autonomous Drone Vision System
 
 Autonomous control system for DJI Tello drones based on ArUco marker detection and PID control. 
@@ -166,4 +158,3 @@ self.aruco = coordinatesAruco.ArucoDetector(cv2.aruco.DICT_6X6_50)
 ## Authors
 
 Drone Ops Team
->>>>>>> dev
