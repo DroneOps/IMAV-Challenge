@@ -16,7 +16,8 @@ class MissionControl:
     def get_velocities(self):
         vel_y = self.tello.get_speed_y() # Get the velocity of the drone in the x-axis
         vel_z = self.tello.get_speed_z() # Get the velocity of the drone in the y-axis
-        return vel_y, vel_z
+        vel_x = self.tello.get_speed_x() # Get the velocity of the drone in the z-axis (forward/backward)
+        return vel_y, vel_z , vel_x
 
     def start_mission(self):
         print("[INFO] Starting the mission...")
@@ -36,10 +37,10 @@ class MissionControl:
             self.tello.streamoff()
             self.tello.end()
     
-    def send_control_signals(self, control_signal_y, control_signal_z):
+    def send_control_signals(self, control_signal_y, control_signal_z , control_signal_x):
         # Here you would send the control signals to the drone using the appropriate methods from the Tello class
         # For example:
-        self.tello.send_rc_control(int(control_signal_y), 0, int(control_signal_z), 0)
+        self.tello.send_rc_control(int(control_signal_y), int(control_signal_x), int(control_signal_z), 0)
 
 if __name__ == "__main__":
     mission_control = MissionControl()

@@ -8,22 +8,26 @@ class ArucoDetector:
     def __init__(self, aruco_type,frame =None):
         self.aruco_dict = aruco.getPredefinedDictionary(aruco_type)
         self.parameters = aruco.DetectorParameters()
-        self.error = (0, 0) # initialize the error variable to store the error between the center of the frame and the center point of the detected line or rectangle
+        self.error = (0, 0, 0) # initialize the error variable to store the error between the center of the frame and the center point of the detected line or rectangle
         # Inicializamos en None para configurarlos con el primer frame real
         self.x = None
         self.y = None
-        self.error = (0, 0)
+        self.z = None
         self.frame = frame
         # --- NUEVAS VARIABLES PARA CÁLCULO DE DISTANCIA ---
         # Distancia focal estimada para resolución 2592px (Aprox 1800-2000)
         self.focal_length = 900
         # Ancho real del marco físico en centímetros (Ajusta este valor)
         self.real_width_cm = 44.0 
+        # Distancia objetivo que el dron debe mantener (en cm)
+        self.target_distance = 150
         self.detector = cv2.aruco.ArucoDetector(self.aruco_dict, self.parameters)
 
     # Detect the markers in the frame and draw the detected markers, the center point of the detected line or rectangle, 
     # and the error between the center of the frame and the center point of the detected line or rectangle on the frame  
-    def detect_markers(self):
+    def detect_markers(self, frame):
+        # Actualizar el frame con el que se pasa como parámetro
+        self.frame = frame
 
         # Si es el primer frame, configuramos dimensiones
         # usamos las dimensiones reales del frame es m,ás que nada para que las líneas centrales coincidan con el centro real del frame
@@ -57,6 +61,8 @@ class ArucoDetector:
                 cv2.polylines(self.frame, [corners[i].astype(int)], True, (0, 255, 0), 2)
 
         # If at least 4 markers are detected, we can assume that they form a rectangle and we can draw it on the frame
+        distancia = 0  # Initialize distance to 0
+        error_x = 0  # Initialize error_x to 0
         if ids is not None and len(ids) >= 4:
             # Sort markers by ID for consistent ordering
             sorted_indices = sorted(range(len(ids)), key=lambda i: ids[i][0])
@@ -112,10 +118,21 @@ class ArucoDetector:
             ''''''
 
         if center_point != (0, 0): #if the center point of the detected line or rectangle is not (0, 0), we can calculate the error between the center of the frame and the center point of the detected line or rectangle
-            self.error = (center_point[0] - center_frame[0], center_frame[1] - center_point[1]) #calculate the error between the center of the frame and the center point of the detected line or rectangle
+            # Calculate error in distance (actual distance - target distance)
+            error_x = int(distancia) - self.target_distance
+            self.error = (center_point[0] - center_frame[0], center_frame[1] - center_point[1], error_x)
             cv2.putText(self.frame, f'Error: {self.error}', (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2) #write the error on the frame
             cv2.line(self.frame, center_frame, center_point, (0, 0, 0), 2) #draw a line between the center of the frame and the center point of the detected line or rectangle
+        else:
+            self.error = (0, 0, 0)  # Reset error to (0, 0, 0) if no markers detected
         
+        if self.error[2] != 0: #if the error in the x-axis is not 0, we can write "Moving Forward/Backward" on the frame
+            if self.error[2] > 0:
+                cv2.putText(self.frame, f'Moving Forward', (250, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+            else:
+                cv2.putText(self.frame, f'Moving Backward', (250, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+
+
         return self.frame #return the frame with the detected markers, the center point of the detected line or rectangle, and the error between the center of the frame and the center point of the detected line or rectangle
 
     'return the error between the center of the frame and the center point of the detected line or rectangle'   
