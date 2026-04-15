@@ -17,20 +17,20 @@ class ArucoController:
         self.errorPrev = (0, 0) # Para evitar el error de "variable no definida"
         
         # Mostly working
-        self.Kpz = 0.15 # Proportional gain
-        self.Kiz = 0.02 # Integral gain
-        self.Kdz = 0.03 # Derivative gain
+        self.Kpz = 0.45 # Proportional gain
+        self.Kiz = 0.001 # Integral gain
+        self.Kdz = 0.04 # Derivative gain
 
         # Work in progress
-        self.Kpy = 0.11 # Proportional gain
-        self.Kiy = 0.03 # Integral gain
-        self.Kdy = 0.02 # Derivative gain
+        self.Kpy = 0.30 # Proportional gain
+        self.Kiy = 0.001 # Integral gain
+        self.Kdy = 0.04 # Derivative gain
 
         # Work in progress (El men Rodrigo dijo que es para probar entonces no lo borrren porque ni siquiera lo vamos a usar despues >:())
         # Smaller values so we can test control without exaggerated forward/backward movements
         self.Kpx = 0.01 # Proportional gain
-        self.Kix = 0.01 # Integral gain
-        self.Kdx = 0.01 # Derivative gain
+        self.Kix = 0.001 # Integral gain
+        self.Kdx = 0.001 # Derivative gain
 
         self.dt = 0.1 # Time step (in seconds)
 
