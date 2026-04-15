@@ -8,15 +8,29 @@ class ArucoController:
         # Initialize the ArucoDetector with the desired dictionary type (e.g., DICT_6X6_50)
         self.aruco = coordinatesAruco.ArucoDetector(cv2.aruco.DICT_6X6_50,frame )
         self.cap = frame
+
         # PID control parameters
         # IMPORTANTE: Debes inicializar estas variables para que el PID no falle
         self.integral_y = 0
         self.integral_z = 0
         self.integral_x = 0
         self.errorPrev = (0, 0) # Para evitar el error de "variable no definida"
-        self.Kp = 0.03 # Proportional gain
-        self.Ki = 0.03 # Integral gain
-        self.Kd = 0.05 # Derivative gain
+        
+        # Mostly working
+        self.Kpz = 0.15 # Proportional gain
+        self.Kiz = 0.02 # Integral gain
+        self.Kdz = 0.03 # Derivative gain
+
+        # Work in progress
+        self.Kpy = 0.11 # Proportional gain
+        self.Kiy = 0.03 # Integral gain
+        self.Kdy = 0.02 # Derivative gain
+
+        # Work in progress (El men Rodrigo dijo que es para probar entonces no lo borrren porque ni siquiera lo vamos a usar despues >:())
+        # Smaller values so we can test control without exaggerated forward/backward movements
+        self.Kpx = 0.01 # Proportional gain
+        self.Kix = 0.01 # Integral gain
+        self.Kdx = 0.01 # Derivative gain
 
         self.dt = 0.1 # Time step (in seconds)
 
@@ -26,17 +40,17 @@ class ArucoController:
 
     def PID_control(self, error, vel_y, vel_z, vel_x):
         # Calculate the control signal using the PID formula
-        self.proportional_y = round(self.Kp * error[0], 3) # Proportional term for x-axis
-        self.proportional_z = round(self.Kp * error[1], 3) # Proportional term for z-axis
-        self.proportional_x = round(self.Kp * error[2], 3) # Proportional term for x-axis (forward/backward)
+        self.proportional_y = round(self.Kpy * error[0], 3) # Proportional term for x-axis
+        self.proportional_z = round(self.Kpz * error[1], 3) # Proportional term for z-axis
+        self.proportional_x = round(self.Kpx * error[2], 3) # Proportional term for x-axis (forward/backward)
 
-        self.integral_y += round(self.Ki * error[0] * self.dt, 3) # Integral term for x-axis
-        self.integral_z += round(self.Ki * error[1] * self.dt, 3) # Integral term for z-axis
-        self.integral_x += round(self.Ki * error[2] * self.dt, 3) # Integral term for x-axis (forward/backward)
+        self.integral_y += round(self.Kiy * error[0] * self.dt, 3) # Integral term for x-axis
+        self.integral_z += round(self.Kiz * error[1] * self.dt, 3) # Integral term for z-axis
+        self.integral_x += round(self.Kix * error[2] * self.dt, 3) # Integral term for x-axis (forward/backward)
 
-        self.derivative_y = round(self.Kd * vel_y, 3) # Derivative term for x-axis
-        self.derivative_z = round(self.Kd * vel_z, 3) # Derivative term for z-axis
-        self.derivative_x = round(self.Kd * vel_x, 3) # Derivative term for x-axis (forward/backward)
+        self.derivative_y = round(self.Kdy * vel_y, 3) # Derivative term for x-axis
+        self.derivative_z = round(self.Kdz * vel_z, 3) # Derivative term for z-axis
+        self.derivative_x = round(self.Kdx * vel_x, 3) # Derivative term for x-axis (forward/backward)
 
         control_signal_y = self.proportional_y + self.integral_y + self.derivative_y
         control_signal_z = self.proportional_z + self.integral_z + self.derivative_z
