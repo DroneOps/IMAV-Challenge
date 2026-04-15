@@ -10,17 +10,18 @@ class ArucoDetector:
         self.parameters = aruco.DetectorParameters()
         self.error = (0, 0, 0) # initialize the error variable to store the error between the center of the frame and the center point of the detected line or rectangle
         # Inicializamos en None para configurarlos con el primer frame real
-        self.x = None
-        self.y = None
+        self.x = 920                        # Pixeles horizontales de la camara del Tello
+        self.y = 760                        # Pixeles verticales de la camara del Tello
         self.z = None
         self.frame = frame
         # --- NUEVAS VARIABLES PARA CÁLCULO DE DISTANCIA ---
-        # Distancia focal estimada para resolución 2592px (Aprox 1800-2000)
-        self.focal_length = 900
+        # Distancia focal estimada para resolución 920px
+        self.focal_length = 667
         # Ancho real del marco físico en centímetros (Ajusta este valor)
-        self.real_width_cm = 44.0 
+        self.real_width_cm = 38.0 
         # Distancia objetivo que el dron debe mantener (en cm)
-        self.target_distance = 150
+        self.target_distance = 100.0
+        # -----------------------------------------------
         self.detector = cv2.aruco.ArucoDetector(self.aruco_dict, self.parameters)
 
     # Detect the markers in the frame and draw the detected markers, the center point of the detected line or rectangle, 
@@ -28,13 +29,6 @@ class ArucoDetector:
     def detect_markers(self, frame):
         # Actualizar el frame con el que se pasa como parámetro
         self.frame = frame
-
-        # Si es el primer frame, configuramos dimensiones
-        # usamos las dimensiones reales del frame es m,ás que nada para que las líneas centrales coincidan con el centro real del frame
-        if self.x is None or self.y is None:
-            self.y, self.x = self.frame.shape[:2]
-
-
 
         gray = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY) # convert the frame to grayscale for better detection
         
