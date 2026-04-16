@@ -11,4 +11,13 @@ class Logger:
         self.rows[0].append(x_velocity)
         self.rows[1].append(y_velocity)
         self.rows[2].append(z_velocity)
-        print(self.rows)
+        self.save_to_file()
+
+    def save_to_file(self):
+        with open('log.csv', 'w') as csvfile:
+            csvwriter = csv.writer(csvfile) # Create writer object
+            csvwriter.writerow(self.fields) # Write header
+            csvwriter.writerows(self.rows) # Write multiple rows
+
+    def __del__(self):
+        self.save_to_file()

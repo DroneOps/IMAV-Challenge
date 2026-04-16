@@ -24,7 +24,7 @@ class MissionControl:
         return vel_x, vel_y, vel_z
 
     def save_velocities(self):
-        while self.tello.is_flying:
+        while True:
             vel_x, vel_y, vel_z = self.get_velocities()
             self.logger.update_info(vel_x, vel_y, vel_z)
             time.sleep(1)
@@ -55,7 +55,7 @@ class MissionControl:
 if __name__ == "__main__":
     mission_control = MissionControl()
     t1 = threading.Thread(target=mission_control.start_mission)
-    t2 = threading.Thread(target=mission_control.get_velocities)
+    t2 = threading.Thread(target=mission_control.save_velocities)
     
     t1.start()
     t2.start()
