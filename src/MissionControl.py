@@ -1,6 +1,8 @@
 import Control_Aruco
 from djitellopy import Tello
-import cv2 
+import threading
+import logger
+import time
 
 class MissionControl:
     def __init__(self):
@@ -12,12 +14,20 @@ class MissionControl:
         self.cap = self.tello.get_frame_read() # Get the video stream from the drone's camera
         
         self.aruco_controller = Control_Aruco.ArucoController(self, self.cap )
+        self.logger = logger.Logger()
+        self.lock = threading.Lock()
 
     def get_velocities(self):
-        vel_y = self.tello.get_speed_y() # Get the velocity of the drone in the x-axis
-        vel_z = self.tello.get_speed_z() # Get the velocity of the drone in the y-axis
-        vel_x = self.tello.get_speed_x() # Get the velocity of the drone in the z-axis (forward/backward)
-        return vel_y, vel_z , vel_x
+        vel_x = self.tello.get_speed_x() # Get the velocity of the drone in the x-axis
+        vel_y = self.tello.get_speed_y() # Get the velocity of the drone in the y-axis
+        vel_z = self.tello.get_speed_z() # Get the velocity of the drone in the z-axis
+        return vel_x, vel_y, vel_z
+
+    def save_velocities(self):
+        while self.tello.is_flying:
+            vel_x, vel_y, vel_z = self.get_velocities()
+            self.logger.update_info(vel_x, vel_y, vel_z)
+            time.sleep(1)
 
     def start_mission(self):
         print("[INFO] Starting the mission...")
@@ -44,4 +54,8 @@ class MissionControl:
 
 if __name__ == "__main__":
     mission_control = MissionControl()
-    mission_control.start_mission()
+    t1 = threading.Thread(target=mission_control.start_mission)
+    t2 = threading.Thread(target=mission_control.get_velocities)
+    
+    t1.start()
+    t2.start()
