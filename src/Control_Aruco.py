@@ -70,7 +70,7 @@ class ArucoController:
                 continue
 
             # Obtain velocity readings from the drone (for the derivative term in PID control)
-            vel_y, vel_z, vel_x = self.mission_control.get_velocities()
+            vel_y, vel_z, vel_x = self.mission_control.get_speeds()
 
             # Detect markers and draw the results on the frame
             self.aruco.detect_markers(frame) 

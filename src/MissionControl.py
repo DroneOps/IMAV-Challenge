@@ -17,22 +17,28 @@ class MissionControl:
         self.logger = logger.Logger()
         self.lock = threading.Lock()
 
-    def get_velocities(self):
-        vel_x = self.tello.get_speed_x() # Get the velocity of the drone in the x-axis
-        vel_y = self.tello.get_speed_y() # Get the velocity of the drone in the y-axis
-        vel_z = self.tello.get_speed_z() # Get the velocity of the drone in the z-axis
-        return vel_x, vel_y, vel_z
+    def get_speeds(self):
+        speed_x = self.tello.get_speed_x() # Get the speed of the drone in the x-axis
+        speed_y = self.tello.get_speed_y() # Get the speed of the drone in the y-axis
+        speed_z = self.tello.get_speed_z() # Get the speed of the drone in the z-axis
+        return speed_x, speed_y, speed_z
 
-    def save_velocities(self):
+    def save_speeds(self):
         while True:
-            vel_x, vel_y, vel_z = self.get_velocities()
-            self.logger.update_info(vel_x, vel_y, vel_z)
-            time.sleep(1)
+            speed_x = self.tello.get_speed_x() # Get the speed of the drone in the x-axis
+            speed_y = self.tello.get_speed_y() # Get the speed of the drone in the y-axis
+            speed_z = self.tello.get_speed_z() # Get the speed of the drone in the z-axis
+            self.logger.update_info(speed_x, speed_y, speed_z)
+            time.sleep(0.1)
+
+    def plot_speeds(self):
+        while True:
+            self.logger.plot_log()
 
     def start_mission(self):
         print("[INFO] Starting the mission...")
         try:
-            self.tello.takeoff() # Take off the drone   
+            # self.tello.takeoff() # Take off the drone   
             self.aruco_controller.run()
         except KeyboardInterrupt:
             print("[INFO] Mission interrupted by user.")
@@ -55,7 +61,9 @@ class MissionControl:
 if __name__ == "__main__":
     mission_control = MissionControl()
     t1 = threading.Thread(target=mission_control.start_mission)
-    t2 = threading.Thread(target=mission_control.save_velocities)
+    t2 = threading.Thread(target=mission_control.save_speeds)
+    t3 = threading.Thread(target=mission_control.plot_speeds)
     
     t1.start()
     t2.start()
+    t3.start()
