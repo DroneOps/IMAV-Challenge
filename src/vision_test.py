@@ -7,7 +7,11 @@ class ArucoDetector:
     def __init__(self, aruco_type):
         # 1. Configuración del diccionario ArUco
         self.aruco_dict = aruco.getPredefinedDictionary(aruco_type)
-        self.parameters = aruco.DetectorParameters()
+        
+        # self.parameters = aruco.DetectorParameters() # Uncomment if test doesn't work
+        
+        # Precise corner refinement method for better accuracy (especially with fisheye distortion)
+        self.parameters.cornerRefinementMethod = aruco.CORNER_REFINE_SUBPIX
         self.detector = cv2.aruco.ArucoDetector(self.aruco_dict, self.parameters)
         
         # 2. Resolución de procesamiento
@@ -16,6 +20,7 @@ class ArucoDetector:
         # 3. Datos de calibración (Escalados de 960x720 a 400x300)
         scale_x = self.x / 960.0
         scale_y = self.y / 720.0
+        
         
         self.fx = 919.8813270094881 * scale_x
         self.fy = 921.1501718736872 * scale_y
@@ -26,7 +31,7 @@ class ArucoDetector:
             [self.fx, 0, self.cx],
             [0, self.fy, self.cy],
             [0, 0, 1]
-        ], dtype=np.float32)
+        ], dtype=np.float32) 
         
         # 4. Coeficientes de distorsión para corregir los 6cm (Ojo de Pez)
         # Estos valores compensan la curvatura del lente del Tello
