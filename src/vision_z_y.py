@@ -21,7 +21,7 @@ class ArucoDetector:
         self.parameters.adaptiveThreshConstant = 2
         
         # Si el marco está lejos y es pequeño, baja este valor a 0.01
-        self.parameters.minMarkerPerimeterRate = 0.01
+        self.parameters.minMarkerPerimeterRate = 0.01 # Es la relación entre el perímetro del marcador y el tamaño de la imagen. Si el marcador es pequeño o está lejos, su perímetro será menor, por lo que este valor ayuda a detectar marcadores más pequeños. Si el marco es grande o está cerca, puedes aumentar este valor para evitar detecciones falsas de objetos pequeños.
 
         self.detector = cv2.aruco.ArucoDetector(self.aruco_dict, self.parameters)
         
@@ -78,12 +78,35 @@ class ArucoDetector:
                 # Cámbialo aquí: dist_z = tvec[2][0] - 4.0
                 dist_z = tvec[2][0] 
                 
+                # Centro del marco detectado
                 center_px = np.mean(img_points, axis=0).astype(int)
-                cv2.circle(self.frame, tuple(center_px), 7, (0, 0, 255), -1)
-                cv2.polylines(self.frame, [img_points.astype(int)], True, (0, 255, 0), 2)
-                cv2.putText(self.frame, f"{dist_z:.1f} cm", (10, 30), 1, 1.5, (0, 255, 0), 2)
+
+                # Centro de la camara
+                center_window = (self.x // 2, self.y // 2)
+
+                # Calcular el error de los lados
+                error_x = center_px[0] - center_window[0]
+                error_y = center_window[1] - center_px[1]  # Invertido para que arriba sea positivo
+
+                # Dibujar los errores en la pantalla
+                cv2.rectangle(self.frame, (220, 5), (395, 60), (0, 0, 0), -1) # Fondo para el texto
+
+                cv2.putText(self.frame, f"Err: X {error_x} px", (230, 25), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                cv2.putText(self.frame, f"Err: Y {error_y} px", (230, 50), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 1)
+                
+                # Dibujar una linea que conecte ambos centros
+                cv2.line(self.frame, center_window, tuple(center_px), (0, 255, 255), 2)
+
+                # Dibujar el marco y el centro detectado
+                cv2.circle(self.frame, tuple(center_px), 7, (0, 0, 255), -1) # Centro del marco detectado
+                cv2.polylines(self.frame, [img_points.astype(int)], True, (0, 255, 0), 2) # Dibuja el marco detectado
+                
+                cv2.putText(self.frame, f"Distancia: {dist_z:.1f} cm", (10, 30), 
+                            1, 1.2, (0, 255, 0), 2) # Distancia al marcador
         else:
-            cv2.putText(self.frame, "BUSCANDO...", (10, 30), 1, 1.2, (0, 0, 255), 2)
+            cv2.putText(self.frame, "BUSCANDO...", (10, 30), 1, 1.0, (0, 0, 255), 2)
 
         return self.frame
 
