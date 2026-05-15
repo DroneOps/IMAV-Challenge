@@ -1,12 +1,13 @@
-from djitellopy import Tello
 import cv2
+from djitellopy import Tello
+
 
 tello = Tello()
 tello.connect()
 print("Batería:", tello.get_battery())
 tello.streamon()
 while True:
-    tello.takeoff()
+    #tello.takeoff()
     frame_read = tello.get_frame_read()
     frame = frame_read.frame
     if frame is not None:

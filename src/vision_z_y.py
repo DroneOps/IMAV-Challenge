@@ -33,11 +33,11 @@ class ArucoDetector:
         # --- PERILLA 3: PRECISIÓN DE DISTANCIA (AJUSTE FINO) ---
         # Si cuando estás a 100cm el código dice 105cm, baja el 0.94 a 0.90
         # Si dice 95cm, sube el 0.94 a 0.98
-        ajuste_focal = 0.98
-        self.fx = 919.8813270094881 * scale_x * ajuste_focal
-        self.fy = 921.1501718736872 * scale_y * ajuste_focal
-        self.cx = 486.99109090812397 * scale_x
-        self.cy = 360.42224121157807 * scale_y
+        ajuste_focal = .8
+        self.fx = 917.2963798156287 * scale_x * ajuste_focal
+        self.fy = 918.5664777675206 * scale_y * ajuste_focal
+        self.cx = 489.60023141280055 * scale_x
+        self.cy = 373.24114282133826 * scale_y
 
         self.camera_matrix = np.array([[self.fx, 0, self.cx], [0, self.fy, self.cy], [0, 0, 1]], dtype=np.float32) 
         self.dist_coeffs = np.array([[-0.012, 0.115, 0.001, -0.001, -0.32]], dtype=np.float32)
