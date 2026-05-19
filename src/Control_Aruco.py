@@ -1,107 +1,150 @@
 import coordinatesAruco 
 import cv2
+import numpy as np
 import MissionControl as MC
+from kalman import KalmanPosicion 
 
 class ArucoController:
 
-    def __init__(self,mission_control = None, frame = None):
-        # Initialize the ArucoDetector with the desired dictionary type (e.g., DICT_6X6_50)
-        self.aruco = coordinatesAruco.ArucoDetector(cv2.aruco.DICT_6X6_50,frame )
-        self.cap = frame
+    def __init__(self, mission_control=None, frame=None):
+        self.aruco = coordinatesAruco.ArucoDetector(cv2.aruco.DICT_6X6_50, frame) 
+        self.cap = frame 
+        self.mission_control = mission_control 
 
-        # PID control parameters
-        # IMPORTANTE: Debes inicializar estas variables para que el PID no falle
-        self.integral_y = 0
-        self.integral_z = 0
-        self.integral_x = 0
-        self.errorPrev = (0, 0) # Para evitar el error de "variable no definida"
+        self.integral_y = 0 
+        self.integral_z = 0 
+        self.errorPrev = (0, 0, 0) 
         
-        # Mostly working
-        self.Kpz = 0.45 # Proportional gain
-        self.Kiz = 0.001 # Integral gain
-        self.Kdz = 0.04 # Derivative gain
+        # Ganancias de Centrado (Ejes Y y Z)
+        self.Kpz = 0.50
+        self.Kiz = 0.001 
+        self.Kpy = 0.50
+        self.Kiy = 0.001 
 
-        # Work in progress
-        self.Kpy = 0.30 # Proportional gain
-        self.Kiy = 0.001 # Integral gain
-        self.Kdy = 0.04 # Derivative gain
+        # Velocidad constante de avance crucero
+        self.velocidad_avance_base = 15 
 
-        # Work in progress (El men Rodrigo dijo que es para probar entonces no lo borrren porque ni siquiera lo vamos a usar despues >:())
-        # Smaller values so we can test control without exaggerated forward/backward movements
-        self.Kpx = 0.01 # Proportional gain
-        self.Kix = 0.001 # Integral gain
-        self.Kdx = 0.001 # Derivative gain
+        self.dt = 0.1 
 
-        self.dt = 0.1 # Time step (in seconds)
+        # Inicialización de Filtros de Kalman independientes por eje
+        self.kalman_y = KalmanPosicion(dt=self.dt, std_acc=0.2, std_vision=4.0) 
+        self.kalman_z = KalmanPosicion(dt=self.dt, std_acc=0.2, std_vision=3.0) 
+        self.kalman_x = KalmanPosicion(dt=self.dt, std_acc=0.1, std_vision=2.0) 
+        
+        # Bandera de seguridad para evitar congelamientos en el arranque
+        self.marco_detectado_al_menos_una_vez = False
 
-        self.mission_control = mission_control # Create an instance of the MissionControl class to access its methods and attributes
+    def PI_control(self, error):
+        self.proportional_y = round(self.Kpy * error[0], 3) 
+        self.proportional_z = round(self.Kpz * error[1], 3) 
 
+        self.integral_y += round(self.Kiy * error[0] * self.dt, 3) 
+        self.integral_z += round(self.Kiz * error[1] * self.dt, 3) 
 
+        control_signal_y = int(self.proportional_y + self.integral_y)
+        control_signal_z = int(self.proportional_z + self.integral_z)
 
-    def PID_control(self, error, vel_y, vel_z, vel_x):
-        # Calculate the control signal using the PID formula
-        self.proportional_y = round(self.Kpy * error[0], 3) # Proportional term for x-axis
-        self.proportional_z = round(self.Kpz * error[1], 3) # Proportional term for z-axis
-        self.proportional_x = round(self.Kpx * error[2], 3) # Proportional term for x-axis (forward/backward)
-
-        self.integral_y += round(self.Kiy * error[0] * self.dt, 3) # Integral term for x-axis
-        self.integral_z += round(self.Kiz * error[1] * self.dt, 3) # Integral term for z-axis
-        self.integral_x += round(self.Kix * error[2] * self.dt, 3) # Integral term for x-axis (forward/backward)
-
-        self.derivative_y = round(self.Kdy * vel_y, 3) # Derivative term for x-axis
-        self.derivative_z = round(self.Kdz * vel_z, 3) # Derivative term for z-axis
-        self.derivative_x = round(self.Kdx * vel_x, 3) # Derivative term for x-axis (forward/backward)
-
-        control_signal_y = self.proportional_y + self.integral_y + self.derivative_y
-        control_signal_z = self.proportional_z + self.integral_z + self.derivative_z
-        control_signal_x = self.proportional_x + self.integral_x + self.derivative_x
-
-        # For demonstration, we will just print the control signals
-        print(f"[INFO] Control Signal Y: {control_signal_y}, Control Signal Z: {control_signal_z}, Control Signal X: {control_signal_x}")
-
-        return control_signal_y, control_signal_z, control_signal_x
-
+        return control_signal_y, control_signal_z
 
     def run(self):
-    
+        self.mission_control.takeoff() 
+        
+        frame_timeout = 0
+        max_timeout = 30 
+        
+        # --- CONFIGURACIÓN DE VELOCIDADES DINÁMICAS ---
+        velocidad_crucero = 12  # Velocidad tranquila mientras se alinea usando el ArUco
+        velocidad_sprint = 15  # ¡Acelerón! Avanza rápido cuando pierde de vista el marco
+        
         while True:
-            frame = self.cap.frame
+            frame = self.cap.frame if self.cap is not None else None 
             if frame is None:
-                continue
-
-            # Obtain velocity readings from the drone (for the derivative term in PID control)
-            vel_y, vel_z, vel_x = self.mission_control.get_speeds()
-
-            # Detect markers and draw the results on the frame
-            self.aruco.detect_markers(frame) 
+                frame_timeout += 1 
+                if frame_timeout > max_timeout: 
+                    break
+                continue 
             
-            # Get the error between the center of the frame and the center point of the detected line or rectangle
-            self.error = self.aruco.get_error()
-            self.aruco
-            #print(f"Error actual: {error}")
-            if self.error != (0, 0, 0) and self.error != self.errorPrev: #if there is an error, we can use the PID control to calculate the control signal to move the drone towards the center of the detected line or rectangle
-                control_signal_y, control_signal_z, control_signal_x = self.PID_control(self.error, vel_y, vel_z, vel_x)
-                self.mission_control.send_control_signals(control_signal_y, control_signal_z, control_signal_x) # Send the control signals to the drone to adjust its position based on the detected error
+            frame_timeout = 0 
+            
+            # 1. PROCESAMIENTO VISUAL (PnP)
+            processed_frame = self.aruco.detect_markers(frame)
+            raw_error = self.aruco.get_error()
 
-            self.errorPrev = self.error # update the previous error with the current error for the next iteration
+            # Captura segura de velocidades del Tello evitando bloqueos UDP
+            try:
+                vel_y, vel_z, vel_x = self.mission_control.get_speeds() 
+            except:
+                vel_y, vel_z, vel_x = 0, 0, 0
 
-            # Show the frame that already has the drawings of the class
-            cv2.imshow('Deteccion Aruco', frame) 
+            # 2. CONTROL Y FUSIÓN DE SENSORES
+            if raw_error != (0, 0, 0):
+                # CASO A: EL ARUCO ES VISIBLE (Alineación fina)
+                self.marco_detectado_al_menos_una_vez = True
 
-             # Send the control signals to the drone
+                # Predicción y corrección normal de Kalman
+                self.kalman_y.predict(vel_y)
+                self.kalman_z.predict(vel_z)
+                self.kalman_x.predict(vel_x)
 
+                filtered_err_y = self.kalman_y.update(raw_error[0])
+                filtered_err_z = self.kalman_z.update(raw_error[1])
+                estimated_dist_x = self.kalman_x.update(raw_error[2])
+                
+                filtered_error = (filtered_err_y, filtered_err_z, estimated_dist_x)
+                cs_y, cs_z = self.PI_control(filtered_error)
+                
+                # Usamos la velocidad crucero para no pasarnos de largo mientras nos centramos
+                cs_x = velocidad_crucero
+                
+            else:
+                # CASO B: EL DRON YA NO VE EL ARUCO (Cruzando la ventana)
+                if self.marco_detectado_al_menos_una_vez:
+                    # Forzamos estados neutros laterales y verticales para que vaya derecho
+                    self.kalman_y.x = np.array([[0.0], [0.0]])
+                    self.kalman_z.x = np.array([[0.0], [0.0]])
+                    
+                    # El eje X predice la distancia restante usando la velocidad actual
+                    estimated_dist_x = self.kalman_x.predict(vel_x)
+                    
+                    cs_y = 0
+                    cs_z = 0
+                    
+                    # ¡NUEVO! Le metemos el sprint rápido para ganarle a la incertidumbre del Kalman
+                    cs_x = velocidad_sprint
+                    
+                    filtered_err_y = 0.0
+                    filtered_err_z = 0.0
+                else:
+                    # Si está despegando y aún no encuentra el marco, se queda quieto
+                    estimated_dist_x = 999.0
+                    cs_y = 0
+                    cs_z = 0
+                    cs_x = 0 
+                    filtered_err_y = 0.0
+                    filtered_err_z = 0.0
 
+            # --- CONDICIÓN DE AUTO-LAND ---
+            # Como ahora va más rápido, aumentamos ligeramente el margen de cruce a -25 cm 
+            # para compensar la inercia del frenado del Tello.
+            if estimated_dist_x <= -25.0:
+                self.mission_control.send_control_signals(0, 0, 0)
+                break
+
+            # Telemetría gráfica en vivo
+            if self.marco_detectado_al_menos_una_vez:
+                cv2.putText(processed_frame, f"Est. Kalman X: {estimated_dist_x:.1f} cm", (10, 70), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 165, 255), 1)
+                if raw_error == (0, 0, 0):
+                    cv2.putText(processed_frame, "¡SPRINT DE CRUCE!", (250, 20), 
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
+            # 3. ENVÍO DE VELOCIDADES EN RUTA
+            self.mission_control.send_control_signals(cs_y, cs_z, cs_x)
+
+            self.errorPrev = (filtered_err_y, filtered_err_z, estimated_dist_x)
+
+            cv2.imshow('Deteccion Aruco', processed_frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-        self.cap.release()
         cv2.destroyAllWindows()
-
-
-
-def main():
-    controller = ArucoController()
-    controller.run()
-
-if __name__ == "__main__":
-    main()

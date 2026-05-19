@@ -5,7 +5,7 @@ import numpy as np
 import time
 
                 # Pausa vital para que el buffer de video cargue
-cap = cv2.VideoCapture(1)     # Si quieres usar webcam, descomenta esta línea
+cap = cv2.VideoCapture(0)     # Si quieres usar webcam, descomenta esta línea
 
 # Definir coordenadas del centro de la camara del Tello (2592x1936)
 px = 640                       # Pixeles horizontales de la camara del Tello
